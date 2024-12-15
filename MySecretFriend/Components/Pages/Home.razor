@@ -1,0 +1,24 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@inject NavigationManager Nav
+
+<div class="image-container">
+    <img src="/images/Logo.png" alt="Natal" class="christmas-image" />
+</div>
+<div class="buttons-container">
+    <button class="primary-button" @onclick="RegisterFriend">Registrar Amigo</button>
+    <button class="primary-button" @onclick="StartFriend">Iniciar Amigo</button>
+</div>
+
+@code {
+    void RegisterFriend()
+    {
+        Nav.NavigateTo("/friend-editor");
+    }
+
+    void StartFriend()
+    {
+        Console.WriteLine("Teste");
+        // Ação para o botão "Iniciar Amigo"
+    }
+}

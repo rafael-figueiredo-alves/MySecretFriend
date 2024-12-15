@@ -1,0 +1,96 @@
+﻿@page "/friend-editor"
+@rendermode InteractiveServer
+@using MySecretFriend.Entities
+
+<h3 class="text-center">Cadastro de Amigos</h3>
+
+<div class="form-container">
+    <EditForm Model="@Friend" OnValidSubmit="AddFriend">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label for="nome">Nome:</label>
+            <InputText id="nome" class="form-control" @bind-Value="Friend.Nome" required />
+        </div>
+
+        <div class="form-group">
+            <label for="amigo">Amigo:</label>
+            <InputText id="amigo" class="form-control" @bind-Value="Friend.Amigo" required />
+        </div>
+
+        <div class="form-group">
+            <label for="dica1">Dica 1:</label>
+            <InputTextArea id="dica1" class="form-control" @bind-Value="Friend.Dica1" />
+        </div>
+
+        <div class="form-group">
+            <label for="dica2">Dica 2:</label>
+            <InputTextArea id="dica2" class="form-control" @bind-Value="Friend.Dica2" />
+        </div>
+
+        <div class="form-group">
+            <label for="dica3">Dica 3:</label>
+            <InputTextArea id="dica3" class="form-control" @bind-Value="Friend.Dica3" />
+        </div>
+
+        <div class="form-group">
+            <label for="dica4">Dica 4:</label>
+            <InputTextArea id="dica4" class="form-control" @bind-Value="Friend.Dica4" />
+        </div>
+
+        <button class="btn btn-primary w-100" type="submit">Salvar</button>
+    </EditForm>
+
+    <div class="toast @ToastType" style="display: @(ShowToast ? "block" : "none")">
+        @ToastMessage
+        <button class="btn btn-sm btn-light" @onclick="HideToast">✕</button>
+    </div>
+</div>
+
+@code {
+    @code {
+        private Friend Friend = new();
+        private string? ToastMessage;
+        private string ToastType = "success"; // success ou error
+        private bool ShowToast;
+        private bool OnSuccess = false;
+
+        private async Task AddFriend()
+        {
+            var result = await FriendService.AddFriendAsync(Friend);
+            if (result)
+            {
+                OnSuccess = true;
+                ShowToastMessage("Amigo salvo com sucesso!", "success");
+            }
+            else
+            {
+                ShowToastMessage("Erro ao salvar o amigo. Tente novamente.", "error");
+            }
+        }
+
+        private void ShowToastMessage(string message, string type)
+        {
+            ToastMessage = message;
+            ToastType = type;
+            ShowToast = true;
+
+            // Oculta o toast após 5 segundos
+            _ = Task.Delay(1000).ContinueWith(_ =>
+            {
+                ShowToast = false;
+                InvokeAsync(StateHasChanged); // Atualiza a interface
+                if (OnSuccess)
+                    Nav.NavigateTo("/");
+            });
+        }
+
+        private void HideToast()
+        {
+            ShowToast = false;
+        }
+    }
+
+}
+
