@@ -1,0 +1,135 @@
+﻿@page "/friend-display"
+@rendermode InteractiveServer
+@using MySecretFriend.Entities
+@inject FriendService FriendService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<h1 style="text-align:center; margin-bottom:20px;">Exibindo Amigos</h1>
+
+@if (friends?.Count > 0)
+{
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 70vh;">
+        <h1>@(currentStage < 4 ? $"Dica {currentStage + 1}: {currentHint}" : $"Amigo: {currentFriend.Amigo}")</h1>
+
+        @if (showName)
+        {
+            <h1 style="margin-top: 20px;">Nome: @currentFriend.Nome</h1>
+        }
+        else if (showMessage)
+        {
+            <h1 style="margin-top: 20px; color: green;">🎄 Feliz Natal! 🎄</h1>
+        }
+
+        <button class="btn btn-primary" style="margin-top: 30px;" @onclick="NextStage">Próximo</button>
+    </div>
+}
+else
+{
+    <p>Carregando amigos...</p>
+}
+
+@code {
+    private List<Friend>? friends = new();
+    private Friend currentFriend = new();
+    private int currentIndex = 0;
+    private int currentStage = 0;
+    private bool showName = false;
+    private bool showMessage = false;
+    private string currentHint = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if(firstRender)
+        {
+            // Busca a lista de amigos do endpoint
+            friends = await FriendService.GetFriendsAsync();
+
+            await InvokeAsync(StateHasChanged);
+
+            if (friends?.Count > 0)
+            {
+                await LoadCurrentFriend();
+            }
+        }
+    }
+
+    private async Task LoadCurrentFriend()
+    {
+        if (currentIndex < friends?.Count)
+        {
+            currentFriend = friends[currentIndex];
+            currentStage = 0;
+            showName = false;
+            showMessage = false;
+            UpdateCurrentHint();
+            StateHasChanged();
+            await InvokeTTS("Aqui está a primeira dica: " + currentHint);
+        }
+    }
+
+    private void UpdateCurrentHint()
+    {
+        currentHint = currentStage switch
+        {
+            0 => currentFriend.Dica1 ?? string.Empty,
+            1 => currentFriend.Dica2 ?? string.Empty,
+            2 => currentFriend.Dica3 ?? string.Empty,
+            3 => currentFriend.Dica4 ?? string.Empty,
+            _ => string.Empty
+        };
+    }
+
+    private async Task NextStage()
+    {
+        if (showMessage) return;
+
+        if (currentStage < 4)
+        {
+            currentStage++;
+            if (currentStage < 4)
+            {
+                UpdateCurrentHint();
+                await InvokeTTS("E aqui vem a próxima dica: " + currentHint);
+            }
+            else
+            {
+                await InvokeTTS("E o amigo secreto é ... " + currentFriend.Amigo);
+            }
+        }
+        else if (!showName)
+        {
+            showName = true;
+            await InvokeTTS("E eis a pessoa que vai presentear: " + currentFriend.Nome);
+        }
+        else
+        {
+            currentIndex++;
+            if (currentIndex < friends?.Count)
+            {
+                await LoadCurrentFriend();
+            }
+            else
+            {
+                showName = false;
+                showMessage = true;
+                StateHasChanged();
+                await InvokeTTS("Desejo a todos vocês um Feliz Natal!");
+            }
+        }
+    }
+
+    private async Task InvokeTTS(string text)
+    {
+        if (!string.IsNullOrEmpty(text))
+        {
+            await JS.InvokeVoidAsync("speakText", text);
+        }
+    }
+}
+
