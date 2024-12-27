@@ -54,6 +54,11 @@ namespace MySecretFriend.Endpoints
 
                 return Results.Ok(result);
             });
+
+            app.MapDelete("api/v1/friends", async (FriendsDbContext db) =>
+            {
+                await db.DbFriends.ExecuteDeleteAsync();
+            });
         }
     }
 }
