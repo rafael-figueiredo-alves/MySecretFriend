@@ -8,9 +8,43 @@
 <div class="buttons-container">
     <button class="primary-button" @onclick="RegisterFriend">Registrar Amigo</button>
     <button class="primary-button" @onclick="StartFriend">Iniciar Amigo</button>
+    <button class="primary-button" @onclick="ResetFriends">Resetar Amigos</button>
+</div>
+
+<div class="toast @ToastType" style="display: @(ShowToast ? "block" : "none")">
+    @ToastMessage
+    <button class="btn btn-sm btn-light" @onclick="HideToast">✕</button>
+</div>
+
+<div>
+    <p>Total de amigos registrados: @QtdAmigos</p>
 </div>
 
 @code {
+    private string? ToastMessage;
+    private string ToastType = "success"; // success ou error
+    private bool ShowToast;
+    private int QtdAmigos;
+
+    private void ShowToastMessage(string message, string type)
+    {
+        ToastMessage = message;
+        ToastType = type;
+        ShowToast = true;
+
+        // Oculta o toast após 5 segundos
+        _ = Task.Delay(1000).ContinueWith(_ =>
+        {
+            ShowToast = false;
+            InvokeAsync(StateHasChanged); // Atualiza a interface
+        });
+    }
+
+    private void HideToast()
+    {
+        ShowToast = false;
+    }
+
     void RegisterFriend()
     {
         Nav.NavigateTo("/friend-editor");
@@ -19,5 +53,20 @@
     void StartFriend()
     {
         Nav.NavigateTo("/friend-display");
+    }
+
+    async Task ResetFriends()
+    {
+        var Reset = await FriendService.DeleteFriendsAsync();
+        if (Reset)
+            ShowToastMessage("Registros de Amigos secretos apagados com sucesso!", "success");
+        else
+            ShowToastMessage("Ocorreu um erro ao tentar apagar os registros de amigos secretos!", "error");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        QtdAmigos = await FriendService.GetFriendsCountAsync();
+        await InvokeAsync(StateHasChanged);
     }
 }

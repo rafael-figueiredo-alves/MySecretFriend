@@ -57,7 +57,13 @@ namespace MySecretFriend.Endpoints
 
             app.MapDelete("api/v1/friends", async (FriendsDbContext db) =>
             {
-                await db.DbFriends.ExecuteDeleteAsync();
+                return Results.Ok(await db.DbFriends.ExecuteDeleteAsync());
+            });
+
+            app.MapGet("api/v1/friends/count", async (FriendsDbContext db) =>
+            {
+                var teste = await db.DbFriends.AsNoTracking().CountAsync();
+                return Results.Ok(teste);
             });
         }
     }
